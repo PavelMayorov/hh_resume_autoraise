@@ -1,0 +1,15 @@
+# Добавляем в .gitignore ВСЕ
+*
+
+!.gitignore
+!requirements.txt
+!Dockerfile
+!docker-compose.yml_example
+!README.md
+!.env_example
+
+!src/
+!src/database/
+
+# Всегда должно быть в конце
+!src/**/*.py

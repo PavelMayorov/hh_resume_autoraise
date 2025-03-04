@@ -1,0 +1,12 @@
+SQLAlchemy==2.0.38
+phonenumbers==8.13.55
+dotenv==0.9.9
+fake_useragent==2.0.3
+httpx==0.28.1
+bs4==0.0.2
+pydantic==2.10.6
+yarl==1.18.3
+aiogram==3.18.0
+aiosqlite==0.21.0
+greenlet==3.1.1
+lxml==5.3.1

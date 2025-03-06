@@ -1,8 +1,8 @@
-class HHError(Exception):
+class HeadHunterError(Exception):
     """Базовая ошибка сервиса HeadHunter"""
 
 
-class HHResponseError(HHError):
+class HHResponseError(HeadHunterError):
     """Ошибка ответа на запрос"""
 
 

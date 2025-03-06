@@ -33,6 +33,7 @@ class HeadHunter:
         self._http_client = http_client
         self._user_agent = user_agent
         self._login_to_tokens: dict[str, models.HHAuthTokens] = {}
+        self._anon_tokens: models.HHAuthTokens | None = None
         self._tokens_lock = asyncio.Lock()
         self._logger = logging.getLogger("auto_raise.headhunter")
 
@@ -80,10 +81,18 @@ class HeadHunter:
         )
         response.raise_for_status()
 
-        return models.HHAuthTokens(
-            xsrf_token=response.cookies["_xsrf"],
-            hh_token=response.cookies["hhtoken"],
-        )
+        xsrf_token = response.cookies.get("_xsrf")
+        hh_token = response.cookies.get("hhtoken")
+        if xsrf_token is not None and hh_token is not None:
+            self._anon_tokens = models.HHAuthTokens(
+                xsrf_token=xsrf_token,
+                hh_token=hh_token,
+            )
+
+        if self._anon_tokens is None:
+            raise errors.HeadHunterError("anon auth token missing")
+
+        return self._anon_tokens
 
     async def _authorize_account(self, account: models.Account) -> models.HHAuthTokens:
         """Авторизация аккаунта (получение токенов авторизации)"""

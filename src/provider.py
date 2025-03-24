@@ -26,7 +26,7 @@ async def get_account_by_login(
     db: "Repository",
     login: str,
 ) -> models.Account:
-    """Запрашивает и возвращает аккаунты из БД по логину"""
+    """Запрашивает и возвращает аккаунт из БД по логину"""
     db_account = await db.get_account_by_login(login)
     return models.Account.from_db(db_account)
 
@@ -35,7 +35,7 @@ async def get_account_resumes(
     hh: "HeadHunter",
     account: models.Account,
 ) -> list[models.Resume]:
-    """Запрашивает и возвращает все резюме аккаунта из БД"""
+    """Запрашивает и возвращает все резюме аккаунта из HeadHunter"""
     return await hh.get_resumes(account)
 
 

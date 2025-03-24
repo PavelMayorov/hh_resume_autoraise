@@ -442,7 +442,8 @@ class Telegram:
             return
 
         for i in range(0, len(accounts_resumes), constants.GET_RESUMES_PAGINATION_SIZE):
-            text_paths = []
+            text_paths: list[str] = []
             for account, resume in accounts_resumes[i:i+constants.GET_RESUMES_PAGINATION_SIZE]:
                 text_paths.append(f"Аккаунт {account.login} резюме {resume.title}")
-                await message.reply(text="\n".join(text_paths))
+
+            await message.reply(text="\n".join(text_paths))

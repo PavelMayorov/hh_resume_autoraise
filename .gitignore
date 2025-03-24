@@ -1,6 +1,9 @@
 # Добавляем в .gitignore ВСЕ
 *
 
+!config.d/
+!config.d/config.yml_example
+
 !.gitignore
 !requirements.txt
 !Dockerfile

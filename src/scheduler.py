@@ -88,7 +88,12 @@ class Scheduler:
 
                 except Exception:
                     self._logger.exception(f"failed to raise {account=} {resume=}")
+                    await self._telegram.send_notification_to_admin(
+                        message=f"❗️ При попытке поднятия резюме {resume.title} в поиске возникла ошибка.",
+                    )
                     continue
 
-                await self._telegram.send_notification_to_admin(f"🔝 Резюме {resume.title} успешно поднято в поиске.")
+                await self._telegram.send_notification_to_admin(
+                    message=f"🔝 Резюме {resume.title} успешно поднято в поиске.",
+                )
                 self._logger.info(f"successful raise {account=} {resume=}")

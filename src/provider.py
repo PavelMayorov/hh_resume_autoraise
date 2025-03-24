@@ -31,7 +31,7 @@ async def get_account_by_login(
     return models.Account.from_db(db_account)
 
 
-async def get_account_resumes(
+async def get_account_resumes_from_hh(
     hh: "HeadHunter",
     account: models.Account,
 ) -> list[models.Resume]:
@@ -39,7 +39,7 @@ async def get_account_resumes(
     return await hh.get_resumes(account)
 
 
-async def add_resume(
+async def add_account_resume(
     db: "Repository",
     account: models.Account,
     resume: models.Resume,
@@ -50,7 +50,7 @@ async def add_resume(
         title=resume.title,
         account_login=account.login,
     )
-    await db.add_resume(db_resume)
+    await db.add_account_resume(db_resume)
 
 
 async def get_all_accounts_resumes(

@@ -1,8 +1,8 @@
 import asyncio
 import logging
 
+from .config import ServiceConfig
 from .database import SQLiteDB
-from .env import Config
 from .headhunter import HeadHunter
 from .scheduler import Scheduler
 from .telegram import Telegram
@@ -12,8 +12,8 @@ class Service:
     """Основной класс сервиса"""
 
     def __init__(self) -> None:
-        self.config = Config()
-        self.headhunter = HeadHunter.build(self)
+        self.config = ServiceConfig.build()
+        self.headhunter = HeadHunter.build()
         self.database = SQLiteDB.build(self)
         self.telegram = Telegram.build(self)
         self.scheduler = Scheduler.build(self)

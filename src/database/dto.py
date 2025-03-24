@@ -2,7 +2,7 @@ import dataclasses
 from datetime import datetime
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True, slots=True)
 class ToDictMixin:
     """Миксин для добавления метода сериализации в dict"""
 
@@ -11,7 +11,7 @@ class ToDictMixin:
         return dataclasses.asdict(self)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True, slots=True)
 class DBAccount(ToDictMixin):
     """DTO аккаунта пользователя HeadHunter"""
 
@@ -19,7 +19,7 @@ class DBAccount(ToDictMixin):
     password: str
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True, slots=True)
 class DBResume(ToDictMixin):
     """DTO резюме пользователя HeadHunter"""
 

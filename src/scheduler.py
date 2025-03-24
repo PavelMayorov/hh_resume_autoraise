@@ -48,7 +48,7 @@ class Scheduler:
             database=service.database,
             headhunter=service.headhunter,
             telegram=service.telegram,
-            resume_check_frequency=service.config.resume_check_frequency,
+            resume_check_frequency=service.config.scheduler.resume_check_frequency,
         )
 
     async def on_startup(self) -> None:  # noqa: D102

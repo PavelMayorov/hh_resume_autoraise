@@ -64,7 +64,7 @@ class Telegram:
 
     @classmethod
     def build(cls, service: "Service") -> Self:  # noqa: D102
-        bot = Bot(service.config.bot_token)
+        bot = Bot(token=service.config.telegram.bot_token)
         dispatcher = Dispatcher(
             database=service.database,
             headhunter=service.headhunter,
@@ -74,7 +74,7 @@ class Telegram:
         return cls(
             bot=bot,
             dispatcher=dispatcher,
-            admin_id=service.config.tg_admin_id,
+            admin_id=service.config.telegram.admin_id,
         )
 
     async def on_startup(self) -> None:  # noqa: D102

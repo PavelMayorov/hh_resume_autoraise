@@ -75,7 +75,8 @@ class SQLiteDB(Repository):
 
     @classmethod
     def build(cls, service: "Service") -> Self:  # noqa: D102
-        engine = create_async_engine(service.config.db_url)
+        db_url = "sqlite+aiosqlite:///" + service.config.database.db_path
+        engine = create_async_engine(db_url)
         session_maker = async_sessionmaker[AsyncSession](
             bind=engine,
             expire_on_commit=False,

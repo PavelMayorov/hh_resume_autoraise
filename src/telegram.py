@@ -22,6 +22,7 @@ from aiogram.utils.keyboard import (
 )
 
 from . import (
+    constants,
     errors,
     models,
     provider,
@@ -113,6 +114,8 @@ class Telegram:
         self._dp.message(Command("del_resume"))(self._add_resume_handler)
         self._dp.message(DeleteResumeStates.enter_login)(self._enter_login_to_delete_resume)
         self._dp.message(DeleteResumeStates.enter_title)(self._enter_title_to_delete_resume)
+
+        self._dp.message(Command("get_resumes"))(self._get_resumes_handler)
 
     async def send_notification_to_admin(self, message: str) -> None:
         """Отправляет уведомление/сообщение администратору сервиса"""
@@ -414,3 +417,32 @@ class Telegram:
             text="Резюме успешно удалено из автоматического поднятия.",
             reply_markup=types.ReplyKeyboardRemove(),
         )
+
+    async def _get_resumes_handler(
+        self,
+        message: types.Message,
+        state: FSMContext,
+        database: "Repository",
+    ) -> None:
+        """Обработчик запроса всех резюме"""
+        if not self._is_admin(message):
+            return
+
+        try:
+            accounts_resumes = await provider.get_all_accounts_resumes(database)
+
+        except Exception:
+            self._logger.exception("failed to get resumes")
+            await message.reply(text="Произошла непредвиденная ошибка. Попробуйте повторить позже.")
+            await state.clear()
+            return
+
+        if len(accounts_resumes) == 0:
+            await message.reply(text="Ни одно резюме еще не добавлено.")
+            return
+
+        for i in range(0, len(accounts_resumes), constants.GET_RESUMES_PAGINATION_SIZE):
+            text_paths = []
+            for account, resume in accounts_resumes[i:i+constants.GET_RESUMES_PAGINATION_SIZE]:
+                text_paths.append(f"Аккаунт {account.login} резюме {resume.title}")
+                await message.reply(text="\n".join(text_paths))

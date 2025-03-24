@@ -18,16 +18,16 @@ from sqlalchemy.exc import (
 
 from . import errors
 
-T = TypeVar("T")
-P = ParamSpec("P")
-AsyncFunc: TypeAlias = Callable[P, Coroutine[Any, Any, T]]
+_T = TypeVar("_T")
+_P = ParamSpec("_P")
+AsyncFunc: TypeAlias = Callable[_P, Coroutine[Any, Any, _T]]
 
 
-def handle_sqlalchemy_errors(func: AsyncFunc[P, T]) -> AsyncFunc[P, T]:
+def handle_sqlalchemy_errors(func: AsyncFunc[_P, _T]) -> AsyncFunc[_P, _T]:
     """Обработка исключений базы данных и перенос их в кастомные ошибки"""
 
     @wraps(func)
-    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+    async def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _T:
         try:
             return await func(*args, **kwargs)
 

@@ -16,3 +16,5 @@ class HHPaths(enum.StrEnum):
 
 
 RE_RISING_PERIOD = timedelta(hours=4)
+
+GET_RESUMES_PAGINATION_SIZE = 10

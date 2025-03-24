@@ -1,13 +1,10 @@
 import asyncio
 import logging
-from typing import (
-    TYPE_CHECKING,
-    Self,
-)
+from typing import Self
 
-from fake_useragent import UserAgent
 import httpx
 from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
 
 from . import (
     errors,
@@ -17,9 +14,6 @@ from .constants import (
     HHHost,
     HHPaths,
 )
-
-if TYPE_CHECKING:
-    from .service import Service
 
 
 class HeadHunter:
@@ -38,7 +32,7 @@ class HeadHunter:
         self._logger = logging.getLogger("auto_raise.headhunter")
 
     @classmethod
-    def build(cls, service: "Service") -> Self:  # noqa: D102
+    def build(cls) -> Self:  # noqa: D102
         http_client = httpx.AsyncClient(
             follow_redirects=True,
             timeout=5,

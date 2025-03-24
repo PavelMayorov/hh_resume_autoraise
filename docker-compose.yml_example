@@ -1,0 +1,15 @@
+version: "3.5"
+
+services:
+  hh_resume_autoraise:
+    image: "hh_resume_autoraise:0.1.1"
+    container_name: "hh_resume_autoraise"
+    restart: "unless-stopped"
+    volumes:
+      - "./db:/app/db"
+      - "./config.d:/app/config.d"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.05"
+          memory: "128m"

@@ -1,0 +1,9 @@
+telegram:
+  bot_token: "0123456789:TokEntOkenToKeN"
+  admin_id: 987654321
+
+database:
+  db_url: "db/autoraise.db"
+
+scheduler:
+  resume_check_frequency: 00:05:00

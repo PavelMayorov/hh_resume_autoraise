@@ -48,6 +48,13 @@ class AddResumeStates(StatesGroup):
     enter_title = State()
 
 
+class DeleteResumeStates(StatesGroup):
+    """Состояния удаления резюме"""
+
+    enter_login = State()
+    enter_title = State()
+
+
 class Telegram:
     """Абстракция для взаимодействия с сервисом Telegram"""
 
@@ -100,8 +107,12 @@ class Telegram:
         self._dp.message(AddAccountStates.enter_password)(self._set_account_password)
 
         self._dp.message(Command("add_resume"))(self._add_resume_handler)
-        self._dp.message(AddResumeStates.enter_login)(self._set_resume_login)
-        self._dp.message(AddResumeStates.enter_title)(self._set_resume_title)
+        self._dp.message(AddResumeStates.enter_login)(self._enter_login_to_add_resume)
+        self._dp.message(AddResumeStates.enter_title)(self._enter_title_to_add_resume)
+
+        self._dp.message(Command("del_resume"))(self._add_resume_handler)
+        self._dp.message(DeleteResumeStates.enter_login)(self._enter_login_to_delete_resume)
+        self._dp.message(DeleteResumeStates.enter_title)(self._enter_title_to_delete_resume)
 
     async def send_notification_to_admin(self, message: str) -> None:
         """Отправляет уведомление/сообщение администратору сервиса"""
@@ -201,7 +212,7 @@ class Telegram:
         await state.set_state(AddResumeStates.enter_login)
         await message.reply(text="Введите логин (номер телефона) от учетной записи HeadHunter.")
 
-    async def _set_resume_login(
+    async def _enter_login_to_add_resume(
         self,
         message: types.Message,
         state: FSMContext,
@@ -230,17 +241,18 @@ class Telegram:
             return
 
         try:
-            resumes = await provider.get_account_resumes(
+            resumes = await provider.get_account_resumes_from_hh(
                 hh=headhunter,
                 account=account,
             )
 
         except Exception:
-            self._logger.exception(f"failed to get {account=} resumes")
+            self._logger.exception(f"failed to get {account=} resumes from hh")
             await message.reply(text="Произошла непредвиденная ошибка. Попробуйте повторить позже.")
+            await state.clear()
             return
 
-        self._logger.info(f"successful get {account=} {resumes=}")
+        self._logger.info(f"successful get {account=} {resumes=} from hh")
         await state.update_data(
             account=account,
             resumes=resumes,
@@ -253,7 +265,7 @@ class Telegram:
             reply_markup=self._build_keyboard(resume_titles),
         )
 
-    async def _set_resume_title(
+    async def _enter_title_to_add_resume(
         self,
         message: types.Message,
         state: FSMContext,
@@ -287,7 +299,7 @@ class Telegram:
             return
 
         try:
-            await provider.add_resume(
+            await provider.add_account_resume(
                 db=database,
                 account=account,
                 resume=resume,
@@ -301,11 +313,104 @@ class Telegram:
         except Exception:
             self._logger.exception(f"failed to add {resume=} to {account=}")
             await message.reply(text="Произошла непредвиденная ошибка. Попробуйте повторить позже.")
+            await state.clear()
             return
 
         self._logger.info(f"successful add {resume=} to {account=}")
         await state.clear()
         await message.reply(
             text="Резюме успешно добавлено для автоматического поднятия.",
+            reply_markup=types.ReplyKeyboardRemove(),
+        )
+
+    async def _enter_login_to_delete_resume(
+        self,
+        message: types.Message,
+        state: FSMContext,
+        database: "Repository",
+    ) -> None:
+        """Обработчик получения логина для удаления резюме"""
+        login = utils.validate_phone_number(message.text)
+        if login is None:
+            await message.reply(text="Логин введен неверно. Попробуйте еще раз.")
+            return
+
+        try:
+            resumes = await provider.get_account_resumes_from_db(
+                db=database,
+                login=login,
+            )
+
+        except Exception:
+            self._logger.exception(f"failed to get account resumes by {login=} from db")
+            await message.reply(text="Произошла непредвиденная ошибка. Попробуйте повторить позже.")
+            return
+
+        if not resumes:
+            await message.reply(text="Для выбранного аккаунта нет добавленных резюме.")
+            return
+
+        await state.update_data(
+            login=login,
+            resumes=resumes,
+        )
+        await state.set_state(DeleteResumeStates.enter_title)
+
+        resume_titles = (resume.title for resume in resumes)
+        await message.reply(
+            text="Выберете резюме для удаления.",
+            reply_markup=self._build_keyboard(resume_titles),
+        )
+
+    async def _enter_title_to_delete_resume(
+        self,
+        message: types.Message,
+        state: FSMContext,
+        database: "Repository",
+    ) -> None:
+        """Обработчик получения названия резюме для его удаления"""
+        if message.text == "Отмена":
+            await state.clear()
+            await message.reply(
+                text="Удаление резюме отменено.",
+                reply_markup=types.ReplyKeyboardRemove(),
+            )
+            return
+
+        state_data = await state.get_data()
+        resumes: list[models.Resume] = state_data["resumes"]
+        login: str = state_data["login"]
+
+        resume: models.Resume | None = None
+        for r in resumes:
+            if r.title == message.text:
+                resume = r
+                break
+
+        if resume is None:
+            resume_titles = (resume.title for resume in resumes)
+            await message.reply(
+                text="Резюме не найдено. Попробуйте ввести название еще раз.",
+                reply_markup=self._build_keyboard(resume_titles),
+            )
+            return
+
+        try:
+            await provider.delete_account_resume(
+                db=database,
+                login=login,
+                title=resume.title,
+            )
+
+        except Exception:
+            self._logger.exception(f"failed to delete {resume=}")
+            await message.reply(text="Произошла непредвиденная ошибка. Попробуйте повторить позже.")
+            await state.clear()
+            return
+
+        self._logger.info(f"successful delete {resume=}")
+        await state.clear()
+        await message.reply(
+            text="Резюме успешно удалено из автоматического поднятия.",
             reply_markup=types.ReplyKeyboardRemove(),
         )

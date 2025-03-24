@@ -1,5 +1,8 @@
 import logging
-from abc import ABC, abstractmethod
+from abc import (
+    ABC,
+    abstractmethod,
+)
 from datetime import (
     UTC,
     datetime,
@@ -10,6 +13,7 @@ from typing import (
 )
 
 from sqlalchemy import (
+    delete,
     insert,
     select,
     update,
@@ -56,6 +60,16 @@ class Repository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_account_resumes(self, login: str) -> list[dto.DBResume]:
+        """Получение всех резюме аккаунта"""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete_account_resume(self, login: str, title: str) -> None:
+        """Удаление резюме"""
+        raise NotImplementedError
+
+    @abstractmethod
     async def update_last_raise_resume(self, resume_id: str) -> None:
         """Обновление времени последнего поднятия резюме текущим временем"""
         raise NotImplementedError
@@ -91,7 +105,7 @@ class SQLiteDB(Repository):
         async with self._engine.begin() as conn:
             await conn.run_sync(tables.Base.metadata.create_all)
 
-        self._logger.debug("tables created successfully")
+        self._logger.info("tables created successfully")
 
     @handle_sqlalchemy_errors
     async def add_account(self, account: dto.DBAccount) -> None:
@@ -126,7 +140,10 @@ class SQLiteDB(Repository):
     @handle_sqlalchemy_errors
     async def add_account_resume(self, resume: dto.DBResume) -> None:
         """Добавление резюме в БД"""
-        query = insert(tables.Resume).values(**resume.to_dict())
+        query = (
+            insert(tables.Resume)
+            .values(**resume.to_dict())
+        )
         async with self._session_maker() as session:
             await session.execute(query)
             await session.commit()
@@ -156,6 +173,40 @@ class SQLiteDB(Repository):
             accounts_resumes.append((account, resume))
 
         return accounts_resumes
+
+    @handle_sqlalchemy_errors
+    async def get_account_resumes(self, login: str) -> list[dto.DBResume]:
+        """Получение всех резюме аккаунта по логину"""
+        query = (
+            select(tables.Resume)
+            .where(tables.Resume.account_login == login)
+        )
+        async with self._session_maker() as session:
+            result = await session.execute(query)
+
+        return [
+            dto.DBResume(
+                resume_id=row.resume_id,
+                title=row.title,
+                account_login=row.account_login,
+                last_raise=row.last_raise,
+            )
+            for row in result.scalars()
+        ]
+
+    @handle_sqlalchemy_errors
+    async def delete_account_resume(self, login: str, title: str) -> None:
+        """Удаление резюме"""
+        query = (
+            delete(tables.Resume)
+            .where(
+                (tables.Resume.account_login == login)
+                and (tables.Resume.title == title),
+            )
+        )
+        async with self._session_maker() as session:
+            await session.execute(query)
+            await session.commit()
 
     @handle_sqlalchemy_errors
     async def update_last_raise_resume(self, resume_id: str) -> None:

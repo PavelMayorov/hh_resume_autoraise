@@ -46,7 +46,7 @@ class Repository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def add_resume(self, resume: dto.DBResume) -> None:
+    async def add_account_resume(self, resume: dto.DBResume) -> None:
         """Добавление резюме в БД"""
         raise NotImplementedError
 
@@ -124,7 +124,7 @@ class SQLiteDB(Repository):
         )
 
     @handle_sqlalchemy_errors
-    async def add_resume(self, resume: dto.DBResume) -> None:
+    async def add_account_resume(self, resume: dto.DBResume) -> None:
         """Добавление резюме в БД"""
         query = insert(tables.Resume).values(**resume.to_dict())
         async with self._session_maker() as session:

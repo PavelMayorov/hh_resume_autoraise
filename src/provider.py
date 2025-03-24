@@ -58,5 +58,25 @@ async def get_all_accounts_resumes(
 ) -> list[tuple[models.Account, models.Resume]]:
     """Запрашивает и возвращает все резюме всех аккаунтов из БД"""
     db_accounts_resumes = await db.get_all_accounts_resumes()
-    return [(models.Account.from_db(db_account), models.Resume.from_db(db_resume))
-            for db_account, db_resume in db_accounts_resumes]
+    return [
+        (models.Account.from_db(db_account), models.Resume.from_db(db_resume))
+        for db_account, db_resume in db_accounts_resumes
+    ]
+
+
+async def get_account_resumes_from_db(
+    db: "Repository",
+    login: str,
+) -> list[models.Resume]:
+    """Запрашивает и возвращает все резюме аккаунта из БД"""
+    db_resumes = await db.get_account_resumes(login)
+    return [models.Resume.from_db(db_resume) for db_resume in db_resumes]
+
+
+async def delete_account_resume(
+    db: "Repository",
+    login: str,
+    title: str,
+) -> None:
+    """Удаляет резюме из БД"""
+    await db.delete_account_resume(login, title)

@@ -103,6 +103,8 @@ class Telegram:
 
     def _register_message_handlers(self) -> None:
         """Устанавливает обработчиков сообщений и команд"""
+        self._dp.message(Command("help", "start"))(self._help_handler)
+
         self._dp.message(Command("add_account"))(self._add_account_handler)
         self._dp.message(AddAccountStates.enter_login)(self._set_account_login)
         self._dp.message(AddAccountStates.enter_password)(self._set_account_password)
@@ -131,6 +133,25 @@ class Telegram:
         buttons = [[KeyboardButton(text=button_name)] for button_name in button_names]
         buttons.append([KeyboardButton(text="Отмена")])
         return ReplyKeyboardMarkup(keyboard=buttons)
+
+    async def _help_handler(
+        self,
+        message: types.Message,
+        state: FSMContext,
+    ) -> None:
+        """Обработчик команды помощи"""
+        if not self._is_admin(message):
+            return
+
+        msg = """
+        Я - бот для автоматического поднятия резюме в поисковой выдаче платформы HeadHunter.
+        Доступные команды:
+            /add_account - добавить учетные данные аккаунта HeadHunter (логин и пароль) для управления резюме;
+            /add_resume - добавить резюме из указанного аккаунта в список на автоматическое поднятие;
+            /del_resume - удалить резюме из списка на автоматическое поднятие;
+            /get_resumes - вывести все резюме, находящихся в списке на автоматическое поднятие, с указанием аккаунтов.
+        """
+        await message.reply(text=msg)
 
     async def _add_account_handler(
         self,
